@@ -1,65 +1,69 @@
-# 🍕 Pizzería Don Piccolo - DB System
+# 🍕 Pizzería Don Piccolo - Sistema de Gestión de Pedidos (Examen Práctico)
 
-Este proyecto contiene el diseño e implementación de la base de datos relacional para el sistema de gestión de pedidos, domicilios, inventarios y repartidores de **Pizzería Don Piccolo** utilizando **MySQL**.
-
-## 🚀 Cómo empezar / Ejecución de scripts
-
-Para levantar el sistema de base de datos de manera correcta y evitar problemas de dependencias de objetos, ejecuta los scripts en el siguiente orden secuencial:
-
-1. **`database.sql`**: Crea el esquema físico, define las relaciones y precarga catálogos básicos de clientes, pizzas, ingredientes y repartidores.
-2. **`funciones.sql`**: Define la lógica matemática y de cálculo requerida por el negocio (totales, IVA, ganancias netas).
-3. **`triggers.sql`**: Instala los disparadores de automatización (descuentos automáticos de stock, registros de logs, liberación de repartidores).
-4. **`vistas.sql`**: Genera los paneles virtuales de consulta rápida para administración y despacho.
-5. **`consultas.sql`**: Script opcional con plantillas de consultas avanzadas de control de calidad.
+Este repositorio contiene la solución técnica para el examen del módulo de gestión de pedidos, domicilios, inventario y logística de la **Pizzería Don Piccolo**, implementado sobre **MySQL**.
 
 ---
 
-## 🗺️ Estructura del Modelo y Relaciones
+## 🚀 Guía de Ejecución Secuencial
 
-El diseño cuenta con las siguientes entidades estructuradas:
+Para mantener la integridad referencial de las llaves foráneas y objetos de la base de datos, debes ejecutar los archivos en el siguiente orden:
 
-- **clientes**: Almacena los perfiles que realizan los pedidos.
-- **pizzas**: Catálogo de productos con diferenciación por tamaño y tipo.
-- **ingredientes**: Controla el almacén actual y las alertas mínimas de stock.
-- **pizza_ingredientes**: Tabla puente de relación muchos-a-muchos ($N:M$) que especifica la "receta" y la cantidad exacta que requiere cada pizza.
-- **pedidos**: Cabecera principal de la compra que vincula al cliente, tipo de pago e importes finales.
-- **detalles_pedido**: Detalle de cuántas pizzas de qué tipo contiene un pedido ($N:M$ entre pedidos y pizzas).
-- **repartidores**: Listado del personal de entrega, su estado actual de disponibilidad y zonas asignadas.
-- **domicilios**: Relación $1:1$ con pedidos que controla las métricas de logística del despacho a domicilio.
-- **historial_precios**: Historial de auditoría para monitorizar cambios de precios de productos en el tiempo.
+1. **`database.sql`**: Crea el esquema `pizzeria_don_piccolo`, las tablas principales con sus restricciones DDL y los datos iniciales de prueba (DML).
+2. **`funciones.sql`**: Compila las funciones determinísticas y procedimientos almacenados (cálculo de totales con IVA, ganancias netas y registro de entregas).
+3. **`triggers.sql`**: Compila los disparadores para el descuento automático de stock de ingredientes, auditoría de precios y liberación automática de repartidores.
+4. **`vistas.sql`**: Genera vistas reusables para auditoría y métricas operativas (promedios de entrega por zona, ranking de pizzas).
+5. **`consultas.sql`**: Ejecuta las vistas administrativas y las consultas DML para la validación y actualización en tiempo real de los pedidos.
 
 ---
 
-## 🧪 Pruebas Rápidas de Funcionamiento (Ejemplo)
+## 🗺️ Estructura del Esquema Relacional
 
-Puedes ejecutar el siguiente bloque SQL en tu consola una vez cargados todos los scripts para comprobar el funcionamiento de los **Triggers** y **Funciones**:
+- **`clientes`**: Información del cliente (teléfono, dirección, correo).
+- **`pizzas`**: Catálogo de productos clasificados por nombre, tamaño (`Personal`, `Mediana`, `Familiar`), tipo y precio base.
+- **`ingredientes`**: Inventario de materia prima con métricas de `stock_actual` y `stock_minimo`.
+- **`pizza_ingredientes`** *(N:M)*: Receta que conecta las pizzas con la cantidad exacta requerida de cada ingrediente.
+- **`pedidos`**: Entidad central del módulo de compras que gestiona `metodo_pago`, `estado`, `costo_envio` y el `total` calculated.
+- **`detalles_pedido`** *(N:M)*: Asociación entre pedidos y pizzas solicitadas con sus respectivas cantidades.
+- **`repartidores`**: Gestión de repartidores, asignación de zona y control de disponibilidad (`Disponible` / `No Disponible`).
+- **`domicilios`** *(1:1)*: Logística de tiempos de salida, entrega y distancia en kilómetros.
+- **`historial_precios`**: Tabla de auditoría para registro histórico ante variaciones en precios base de las pizzas.
+
+---
+
+## 🛠️ Demostración Operativa (Flujo Completo)
+
+Puedes probar el funcionamiento integrado del sistema ejecutando el siguiente flujo SQL en tu cliente de MySQL:
 
 ```sql
--- 1. Crear un pedido para Juan Pérez (ID: 1)
-INSERT INTO pedidos (id_cliente, metodo_pago, costo_envio) 
-VALUES (1, 'Efectivo', 5000.00); -- Retorna Pedido ID: 1
+USE pizzeria_don_piccolo;
 
--- 2. Añadir una Pizza Pepperoni Mediana (ID: 3) al pedido
+-- 1. Insertar un nuevo pedido con método de pago 'App' y estado 'Pendiente'
+INSERT INTO pedidos (id_cliente, metodo_pago, estado, costo_envio) 
+VALUES (1, 'App', 'Pendiente', 4000.00); 
+
+-- 2. Asignar 2 Pizzas Pepperoni Familiar al pedido generado (ID: 4 por ejemplo)
 INSERT INTO detalles_pedido (id_pedido, id_pizza, cantidad) 
-VALUES (1, 3, 2); 
+VALUES (4, 4, 2); 
 
--- 3. Actualizar el total del pedido usando la función calculada
+-- 3. Calcular y actualizar el valor total (Pizzas + IVA 19% + Envío)
+SELECT calcular_total_pedido(4);
+
+-- 4. Validar el estado del pedido y total en el módulo de compras
+SELECT id_pedido, metodo_pago, estado, total 
+FROM pedidos 
+WHERE id_pedido = 4;
+
+-- 5. Pasar el pedido a 'En Preparación' (Simulación de acción del Gerente)
 UPDATE pedidos 
-SET total = calcular_total_pedido(1) 
-WHERE id_pedido = 1;
+SET estado = 'En Preparación' 
+WHERE id_pedido = 4;
 
--- 4. Consultar que el stock de 'Queso Mozzarella' y 'Pepperoni' haya bajado automáticamente
-SELECT * FROM ingredientes;
-
--- 5. Asignar un repartidor y mandarlo a reparto
+-- 6. Registrar salida a domicilio y entrega mediante el procedimiento almacenado
 INSERT INTO domicilios (id_pedido, id_repartidor, hora_salida, distancia_km) 
-VALUES (1, 1, NOW(), 3.5);
+VALUES (4, 1, NOW(), 4.2);
 
--- Ocupar al repartidor
-UPDATE repartidores SET estado = 'No Disponible' WHERE id_repartidor = 1;
+CALL registrar_entrega_pedido(4, NOW());
 
--- 6. Entregar el pedido usando el procedimiento almacenado
-CALL registrar_entrega_pedido(1, DATE_ADD(NOW(), INTERVAL 25 MINUTE));
-
--- 7. Verificar que el repartidor vuelve a estar "Disponible" automáticamente
-SELECT * FROM repartidores WHERE id_repartidor = 1;
+-- 7. Verificar cambio automático de estado a 'Entregado'
+SELECT id_pedido, estado FROM pedidos WHERE id_pedido = 4;
+```

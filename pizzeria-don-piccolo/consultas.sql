@@ -32,3 +32,21 @@ SELECT
     (stock_minimo - stock_actual) AS cantidad_a_comprar
 FROM ingredientes
 WHERE stock_actual < stock_minimo;
+
+-- 4. Consulta para validar metodo_pago, estado y total de los pedidos activos
+SELECT 
+    p.id_pedido,
+    c.nombre AS cliente,
+    p.fecha_hora,
+    p.metodo_pago,
+    p.estado,
+    p.total
+FROM pedidos p
+JOIN clientes c ON p.id_cliente = c.id_cliente
+ORDER BY p.fecha_hora DESC;
+
+-- 5. Cambio de estado y método de pago en un pedido específico
+UPDATE pedidos
+SET estado = 'Entregado',
+    metodo_pago = 'Efectivo'
+WHERE id_pedido = 3;

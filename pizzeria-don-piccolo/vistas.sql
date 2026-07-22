@@ -20,6 +20,7 @@ JOIN domicilios d ON r.id_repartidor = d.id_repartidor
 JOIN pedidos p ON d.id_pedido = p.id_pedido;
 
 -- 4. Promedio de entrega por zona (AVG y JOIN)
+CREATE OR REPLACE VIEW vista_promedio_entrega_zona AS
 SELECT r.zona_asignada AS zona, 
        ROUND(AVG(TIMESTAMPDIFF(MINUTE, d.hora_salida, d.hora_entrega)), 2) AS promedio_minutos_entrega
 FROM domicilios d

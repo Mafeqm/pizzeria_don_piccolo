@@ -92,7 +92,7 @@ CREATE TABLE historial_precios (
     FOREIGN KEY (id_pizza) REFERENCES pizzas(id_pizza) ON DELETE CASCADE
 );
 
--- 2.  DATOS 
+-- 2. DATOS DE PRUEBA
 INSERT INTO clientes (nombre, telefono, direccion, correo) VALUES
 ('Juan Pérez', '555-0192', 'Calle 45 #12-34, Zona Norte', 'juan.perez@email.com'),
 ('María Gómez', '555-0143', 'Avenida 19 #88-12, Zona Centro', 'maria.gomez@email.com'),
@@ -113,16 +113,26 @@ INSERT INTO ingredientes (nombre, stock_actual, stock_minimo, costo_unidad) VALU
 ('Pepperoni (gr)', 2000.00, 200.00, 5.00),
 ('Albahaca (gr)', 300.00, 50.00, 1.20);
 
--- Relacionar ingredientes con las Pizzas
--- Margarita Mediana (Id: 2) usa: 1 masa, 1 salsa, 200g queso, 10g albahaca
 INSERT INTO pizza_ingredientes VALUES 
-(2, 1, 1.00), (2, 2, 1.00), (2, 3, 200.00), (2, 5, 10.00);
-
--- Pepperoni Mediana (Id: 3) usa: 1 masa, 1 salsa, 180g queso, 100g pepperoni
-INSERT INTO pizza_ingredientes VALUES 
+(2, 1, 1.00), (2, 2, 1.00), (2, 3, 200.00), (2, 5, 10.00),
 (3, 1, 1.00), (3, 2, 1.00), (3, 3, 180.00), (3, 4, 100.00);
 
 INSERT INTO repartidores (nombre, zona_asignada, estado) VALUES
 ('Pedro Picapiedra', 'Zona Norte', 'Disponible'),
 ('Pablo Mármol', 'Zona Centro', 'Disponible'),
 ('Betty Mármol', 'Zona Sur', 'Disponible');
+
+-- Inserciones explícitas con metodo_pago, estado y total
+INSERT INTO pedidos (id_cliente, metodo_pago, estado, costo_envio, total) VALUES
+(1, 'Efectivo', 'Entregado', 3000.00, 24420.00),
+(2, 'Tarjeta', 'En Preparación', 2500.00, 28680.00),
+(3, 'App', 'Pendiente', 3500.00, 41620.00);
+
+INSERT INTO detalles_pedido (id_pedido, id_pizza, cantidad) VALUES
+(1, 2, 1),
+(2, 3, 1),
+(3, 4, 1);
+
+INSERT INTO domicilios (id_pedido, id_repartidor, hora_salida, hora_entrega, distancia_km) VALUES
+(1, 1, '2026-03-01 19:10:00', '2026-03-01 19:35:00', 3.5),
+(2, 2, '2026-03-01 20:00:00', NULL, 2.1);
